@@ -32,11 +32,13 @@ export async function POST() {
             console.log(`Uploaded to ${blob.url}`)
 
             // Update Database
+            const oldPrivateUrl = `https://iumyw6g37gyvnpfu.private.blob.vercel-storage.com/uploads/${filename}`
             const localPath = `/uploads/${filename}`
+
             const { rowCount } = await sql`
         UPDATE products 
         SET image = ${blob.url} 
-        WHERE image = ${localPath}
+        WHERE image = ${localPath} OR image = ${oldPrivateUrl}
       `
 
             results.push({
