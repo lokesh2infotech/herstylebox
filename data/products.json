@@ -1,0 +1,74 @@
+[
+  {
+    "id": "demo-1",
+    "name": "Floral Summer Dress",
+    "description": "Light and breezy midi dress with a delicate floral print. Perfect for sunny days and casual outings.",
+    "price": 49.99,
+    "image": "/uploads/floral-summer-dress.png",
+    "category": "Western Clothing",
+    "subCategory": "Casual",
+    "itemType": "Dress",
+    "size": "S, M, L",
+    "color": "Pink",
+    "stock": 12
+  },
+  {
+    "id": "demo-2",
+    "name": "Classic White Blouse",
+    "description": "Crisp cotton blouse with a relaxed fit. Pairs well with jeans or skirts.",
+    "price": 34.99,
+    "image": "/uploads/white-blouse.png",
+    "category": "Tops",
+    "size": "S, M, L",
+    "color": "White",
+    "stock": 8
+  },
+  {
+    "id": "demo-3",
+    "name": "High-Waist Denim Skirt",
+    "description": "Comfortable denim skirt with a modern high-waist cut. Easy to style for school or weekend.",
+    "price": 39.99,
+    "image": "/uploads/denim-skirt.png",
+    "category": "Western Clothing",
+    "subCategory": "Casual",
+    "itemType": "Bottom",
+    "size": "26, 28, 30, 32",
+    "color": "Blue",
+    "stock": 10
+  },
+  {
+    "id": "demo-4",
+    "name": "Ribbed Cardigan",
+    "description": "Soft ribbed cardigan in a versatile shade. Layer it over dresses or tees.",
+    "price": 44.99,
+    "image": "/uploads/lavender-cardigan.png",
+    "category": "Western Clothing",
+    "subCategory": "Casual",
+    "itemType": "Top",
+    "size": "S, M, L",
+    "color": "Lavender",
+    "stock": 6
+  },
+  {
+    "id": "demo-5",
+    "name": "Striped Tee",
+    "description": "Casual striped t-shirt in breathable cotton. A wardrobe essential.",
+    "price": 24.99,
+    "image": "/uploads/striped-tee.png",
+    "category": "Tops",
+    "size": "S, M, L",
+    "color": "Navy & White",
+    "stock": 15
+  },
+  {
+    "id": "demo-6",
+    "name": "Party Dress",
+    "description": "Elegant dress for special occasions. Features a flattering fit and subtle sparkle.",
+    "price": 69.99,
+    "image": "/uploads/black-party-dress.png",
+    "category": "Dresses",
+    "size": "S, M, L",
+    "color": "Black",
+    "stock": 5
+  }
+]
