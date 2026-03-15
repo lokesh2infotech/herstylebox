@@ -26,7 +26,9 @@ export async function POST() {
             // Upload to Vercel Blob
             const blob = await put(`uploads/${filename}`, fileBuffer, {
                 access: 'public',
-                contentType: filename.endsWith('.png') ? 'image/png' : 'image/jpeg'
+                contentType: filename.endsWith('.png') ? 'image/png' : 'image/jpeg',
+                addRandomSuffix: false,
+                allowOverwrite: true
             })
 
             console.log(`Uploaded to ${blob.url}`)
