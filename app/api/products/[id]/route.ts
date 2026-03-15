@@ -1,56 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { sql } from '@vercel/postgres'
 import { Product } from '@/types'
 import { isAdmin } from '@/lib/auth'
 
-const dataFilePath = path.join(process.cwd(), 'data', 'products.json')
+export const dynamic = 'force-dynamic'
 
-function readProducts(): Product[] {
-  const dataDir = path.join(process.cwd(), 'data')
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true })
-    return []
-  }
-  if (!fs.existsSync(dataFilePath)) {
-    return []
-  }
-  try {
-    const data = fs.readFileSync(dataFilePath, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-function writeProducts(products: Product[]) {
-  const dataDir = path.join(process.cwd(), 'data')
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true })
-  }
-  fs.writeFileSync(dataFilePath, JSON.stringify(products, null, 2))
-}
-
-// GET single product
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const products = readProducts()
-    const product = products.find(p => p.id === params.id)
+    const { rows } = await sql<Product>`SELECT * FROM products WHERE id = ${params.id}`
 
-    if (!product) {
+    if (rows.length === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    return NextResponse.json(product)
+    return NextResponse.json(rows[0])
   } catch (error) {
+    console.error('Failed to fetch product:', error)
     return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 })
   }
 }
 
-// PUT update product
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -60,37 +32,50 @@ export async function PUT(
   }
   try {
     const body = await request.json()
-    const products = readProducts()
-    const index = products.findIndex(p => p.id === params.id)
 
-    if (index === -1) {
+    // Check if product exists
+    const { rows } = await sql<Product>`SELECT * FROM products WHERE id = ${params.id}`
+    if (rows.length === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    const updatedProduct = {
-      ...products[index],
-      ...body,
-      id: params.id, // Ensure ID doesn't change
+    const existing = rows[0]
+
+    const updated = {
+      name: body.name ?? existing.name,
+      description: body.description ?? existing.description,
+      price: 'price' in body ? (parseFloat(body.price) || 0) : existing.price,
+      image: body.image ?? existing.image,
+      category: body.category ?? existing.category,
+      subCategory: body.subCategory ?? existing.subCategory,
+      itemType: body.itemType ?? existing.itemType,
+      size: body.size ?? existing.size,
+      color: body.color ?? existing.color,
+      stock: 'stock' in body ? (parseInt(body.stock) || 0) : existing.stock,
     }
 
-    // Ensure numeric types
-    if ('price' in body) {
-      updatedProduct.price = parseFloat(body.price) || 0
-    }
-    if ('stock' in body) {
-      updatedProduct.stock = parseInt(body.stock) || 0
-    }
+    await sql`
+      UPDATE products SET
+        name = ${updated.name},
+        description = ${updated.description},
+        price = ${updated.price},
+        image = ${updated.image},
+        category = ${updated.category},
+        "subCategory" = ${updated.subCategory},
+        "itemType" = ${updated.itemType},
+        size = ${updated.size},
+        color = ${updated.color},
+        stock = ${updated.stock}
+      WHERE id = ${params.id}
+    `
 
-    products[index] = updatedProduct
-
-    writeProducts(products)
-    return NextResponse.json(products[index])
+    return NextResponse.json({ id: params.id, ...updated })
   } catch (error) {
+    console.error('Failed to update product:', error)
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
   }
 }
 
-// DELETE product
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -99,16 +84,15 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
-    const products = readProducts()
-    const filtered = products.filter(p => p.id !== params.id)
+    const result = await sql`DELETE FROM products WHERE id = ${params.id}`
 
-    if (products.length === filtered.length) {
+    if (result.rowCount === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
 
-    writeProducts(filtered)
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Failed to delete product:', error)
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
   }
 }

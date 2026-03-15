@@ -1,59 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { sql } from '@vercel/postgres'
 import { Product } from '@/types'
 import { isAdmin } from '@/lib/auth'
 
-const dataFilePath = path.join(process.cwd(), 'data', 'products.json')
+export const dynamic = 'force-dynamic'
 
-// Ensure data directory exists
-function ensureDataDirectory() {
-  const dataDir = path.join(process.cwd(), 'data')
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true })
-  }
-}
-
-// Read products from file
-function readProducts(): Product[] {
-  ensureDataDirectory()
-  if (!fs.existsSync(dataFilePath)) {
-    return []
-  }
-  try {
-    const data = fs.readFileSync(dataFilePath, 'utf-8')
-    return JSON.parse(data)
-  } catch {
-    return []
-  }
-}
-
-// Write products to file
-function writeProducts(products: Product[]) {
-  ensureDataDirectory()
-  fs.writeFileSync(dataFilePath, JSON.stringify(products, null, 2))
-}
-
-// GET all products
 export async function GET() {
   try {
-    const products = readProducts()
-    return NextResponse.json(products)
+    const { rows } = await sql<Product>`SELECT * FROM products ORDER BY name ASC`
+    return NextResponse.json(rows)
   } catch (error) {
+    console.error('Failed to fetch products:', error)
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
   }
 }
 
-// POST create new product
 export async function POST(request: NextRequest) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
     const body = await request.json()
-    const products = readProducts()
 
-    const newProduct: Product = {
+    const newProduct = {
       id: Date.now().toString(),
       name: body.name || 'Untitled Product',
       description: body.description || '',
@@ -67,11 +36,19 @@ export async function POST(request: NextRequest) {
       stock: parseInt(body.stock) || 0,
     }
 
-    products.push(newProduct)
-    writeProducts(products)
+    await sql`
+      INSERT INTO products (
+        id, name, description, price, image, category, "subCategory", "itemType", size, color, stock
+      ) VALUES (
+        ${newProduct.id}, ${newProduct.name}, ${newProduct.description}, ${newProduct.price}, 
+        ${newProduct.image}, ${newProduct.category}, ${newProduct.subCategory}, ${newProduct.itemType}, 
+        ${newProduct.size}, ${newProduct.color}, ${newProduct.stock}
+      )
+    `
 
     return NextResponse.json(newProduct, { status: 201 })
   } catch (error) {
+    console.error('Failed to create product:', error)
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
   }
 }
